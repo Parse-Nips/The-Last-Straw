@@ -1,0 +1,3 @@
+[submodule "Assets/Plugins/ParseNips/DevEssentialUnity"]
+	path = Assets/Plugins/ParseNips/DevEssentialUnity
+	url = https://github.com/KrzysztofPlawski1/DevEssentialUnity
