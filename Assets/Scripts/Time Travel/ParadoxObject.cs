@@ -11,61 +11,77 @@ public class ParadoxObject : MonoBehaviour
 
     public Stack<TransformChange> History = new Stack<TransformChange>();
 
+    [SerializeField] 
+    private bool m_Debug;
+    
     private Coroutine mRoutineParadox;
 
     private Vector3 mPrevLocation = Vector3.zero;
     private Quaternion mPrevRotation = Quaternion.identity;
     private Vector3 mPrevScale = Vector3.zero;
-    // Start is called before the first frame update
+    
     private void Start()
     {
         All.Add(this);
-        mPrevLocation = transform.position;
-        mPrevRotation = transform.rotation;
-        mPrevScale = transform.localScale;
-        History.Push( new TransformChange(Vector3.zero, Quaternion.identity, Vector3.zero));
-
-        //History.Add(new HistoryPoint(transform));
-        //mRoutineParadox = StartCoroutine(DoRoutineHistoryPoint());
+        InitializeOriginPoint();
     }
-
+    
     private void FixedUpdate()
     {
-        Vector3 posDiff;
-        Quaternion rotDiff;
-        Vector3 scaleDiff;
-
         if (!SHIFTING)
         {
-            posDiff = transform.position - mPrevLocation;
-            rotDiff = mPrevRotation * Quaternion.Inverse(transform.rotation);
-            scaleDiff = mPrevScale - transform.localScale;
-
-            TransformChange change = new TransformChange(posDiff, rotDiff, scaleDiff);
-
-            Debug.Log("Change: " + change);
-
-            History.Push(change);
+            RecordTransformChange();
         }
         else
         {
-            if (History.Count > 0)
-            {
-                TransformChange last = History.Last();
-                transform.position += last.VelChange;
-                transform.rotation = last.RotChange * transform.rotation;
-                transform.localScale -= last.ScaleChange;
-                Debug.Log("Last Shift: " + last);
-                History.Pop();
-            }
+            PerformParadoxShift();
         }
 
-        mPrevLocation = transform.position;
-        mPrevRotation = transform.rotation;
-        mPrevScale = transform.localScale;
+        var t = transform;
+        mPrevLocation = t.position;
+        mPrevRotation = t.rotation;
+        mPrevScale = t.localScale;
     }
 
-    IEnumerator DoRoutineHistoryPoint()
+    private void InitializeOriginPoint()
+    {
+        var t = transform;
+        mPrevLocation = t.position;
+        mPrevRotation = t.rotation;
+        mPrevScale = t.localScale;
+        History.Push( new TransformChange(Vector3.zero, Quaternion.identity, Vector3.zero));
+    }
+
+    private void RecordTransformChange()
+    {
+        var posDiff = transform.position - mPrevLocation;
+        var rotDiff = mPrevRotation * Quaternion.Inverse(transform.rotation);
+        var scaleDiff = mPrevScale - transform.localScale;
+
+        var change = new TransformChange(posDiff, rotDiff, scaleDiff);
+
+        if (m_Debug) Debug.Log("Change: " + change);
+
+        History.Push(change);
+    }
+
+    private void PerformParadoxShift()
+    {
+        if (History.Count <= 0)
+        {
+            return;
+        }
+        
+        var last = History.Last();
+        var t = transform;
+        t.position += last.PosChange;
+        t.rotation = last.RotChange * t.rotation;
+        t.localScale -= last.ScaleChange;
+        if (m_Debug) Debug.Log("Last Shift: " + last);
+        History.Pop();
+    }
+
+    private IEnumerator DoRoutineHistoryPoint()
     {
         Vector3 posDiff;
         Quaternion rotDiff;
@@ -83,8 +99,11 @@ public class ParadoxObject : MonoBehaviour
                 History.Push(new TransformChange(posDiff,rotDiff,scaleDiff));
 
                 lastTransform = transform;
-                Debug.Log(transform);
-                Debug.Log("Adding " + posDiff);
+                if (m_Debug)
+                {
+                    Debug.Log(transform);
+                    Debug.Log("Adding " + posDiff);
+                }
             }
             else
             {
@@ -92,10 +111,10 @@ public class ParadoxObject : MonoBehaviour
                 if (History.Count > 0)
                 {
                     last = History.Last();
-                    transform.position -= last.VelChange;
+                    transform.position -= last.PosChange;
                     transform.rotation = last.RotChange * transform.rotation;
                     transform.localScale -= last.ScaleChange;
-                    Debug.Log("Moving " + last.VelChange);
+                    if (m_Debug) Debug.Log("Moving " + last.PosChange);
                     History.Pop();
                 }
             }
@@ -124,7 +143,7 @@ public class ParadoxObject : MonoBehaviour
             else break;
 
             currPos = transform.position;
-            prevPos = lastPoint.VelChange;
+            prevPos = lastPoint.PosChange;
 
             currRot = transform.rotation;
             prevRot = lastPoint.RotChange;
@@ -143,24 +162,25 @@ public class ParadoxObject : MonoBehaviour
             History.Pop();
         }
     }
+    
+    [System.Serializable]
+    public struct TransformChange
+    {
+        public Vector3 PosChange;
+        public Quaternion RotChange;
+        public Vector3 ScaleChange;
+
+        public TransformChange(Vector3 pPosDiff, Quaternion pRotDiff, Vector3 pScaleDiff)
+        {
+            PosChange = pPosDiff;
+            RotChange = pRotDiff;
+            ScaleChange = pScaleDiff;
+        }
+
+        public override string ToString()
+        {
+            return $"Pos Diff: {PosChange} | Rot Diff: {RotChange} | Scale Diff: {ScaleChange}";
+        }
+    }
 }
 
-[System.Serializable]
-public struct TransformChange
-{
-    public Vector3 VelChange;
-    public Quaternion RotChange;
-    public Vector3 ScaleChange;
-
-    public TransformChange(Vector3 pPosDiff, Quaternion pRotDiff, Vector3 pScaleDiff)
-    {
-        VelChange = pPosDiff;
-        RotChange = pRotDiff;
-        ScaleChange = pScaleDiff;
-    }
-
-    public override string ToString()
-    {
-        return string.Format("Pos Diff: {0} | Rot Diff: {1} | Scale Diff: {2}", VelChange, RotChange, ScaleChange);
-    }
-}

@@ -12,13 +12,11 @@ public class PlayerInput : MonoBehaviour
     public UnityEvent Move_Left;
     public UnityEvent Move_Jump;
 
-    // Start is called before the first frame update
     void Start()
     {
         MobileUI.SetActive(GameController.IS_MOBILE);
     }
 
-    // Update is called once per frame
     void Update()
     {
         float Input = UnityEngine.Input.GetAxisRaw("Horizontal");

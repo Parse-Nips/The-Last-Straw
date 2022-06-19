@@ -9,7 +9,7 @@ public class GameController : MonoBehaviour {
 
     public bool DebugMode;
 
-    private void Start()
+    private void Awake()
     {
         DEBUGMODE = DebugMode;
         PATH = Application.persistentDataPath;

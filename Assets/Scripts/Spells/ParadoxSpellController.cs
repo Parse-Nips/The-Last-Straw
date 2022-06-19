@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ParadoxScript : MonoBehaviour {
+public class ParadoxSpellController : MonoBehaviour {
     public GameObject GhostPrefab;
     public BoidController MyFlockController;
     public AudioSource AS;
@@ -10,8 +10,6 @@ public class ParadoxScript : MonoBehaviour {
     public AudioClip ParadoxSound;
 
     public float FadeTime = 1f;
-
-    public List<Transform> History = new List<Transform>();
 
     private Vector3 PlayerStart;
     private GameObject mGhost;
